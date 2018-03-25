@@ -1,6 +1,6 @@
-#coding=utf-8
-#tensorflow 1.3.1
-#python 3.6
+# coding=utf-8
+# tensorflow 1.3.1
+# python 3.6
 import os
 
 import matplotlib.image as mpimg
@@ -11,12 +11,12 @@ import tensorflow as tf
 from PIL import Image
 
 
-#获取dataset
+# 获取dataset
 def load_data(dataset_path):
     img = Image.open(dataset_path)
     # 定义一个20 × 20的训练样本，一共有40个人，每个人都10张样本照片
     img_ndarray = np.asarray(img, dtype='float64') / 256
-    #img_ndarray = np.asarray(img, dtype='float32') / 32
+    # img_ndarray = np.asarray(img, dtype='float32') / 32
 
     # 记录脸数据矩阵，57 * 47为每张脸的像素矩阵
     # 40*10张照片
@@ -25,10 +25,10 @@ def load_data(dataset_path):
     for row in range(20):
         for column in range(20):
             faces[20 * row + column] = np.ndarray.flatten(
-                img_ndarray[row * 57: (row + 1) * 57, column * 47 : (column + 1) * 47]
+                img_ndarray[row * 57: (row + 1) * 57, column * 47: (column + 1) * 47]
             )
 
-    # then,we get a mat with shape of (400, 57*47), 2d mat
+    # then,we get a mat with shape of (400, 57*47), 2d mat, this is dataSource of faces
 
 
     label = np.zeros((400, 40))
@@ -36,14 +36,19 @@ def load_data(dataset_path):
         label[i * 10: (i + 1) * 10, i] = 1
 
     # 将数据分成训练集，验证集，测试集
+    # choose 320 people's data as training dataset
     train_data = np.empty((320, 57 * 47))
     train_label = np.zeros((320, 40))
+
+    # choose other 40 as valid dataset
     vaild_data = np.empty((40, 57 * 47))
     vaild_label = np.zeros((40, 40))
+
     test_data = np.empty((40, 57 * 47))
     test_label = np.zeros((40, 40))
 
     for i in range(40):
+        # everybody has 10 pictures, 1-8 as training , 9-10 as valid and test data set
         train_data[i * 8: i * 8 + 8] = faces[i * 10: i * 10 + 8]
         train_label[i * 8: i * 8 + 8] = label[i * 10: i * 10 + 8]
 
@@ -53,6 +58,7 @@ def load_data(dataset_path):
         test_data[i] = faces[i * 10 + 9]
         test_label[i] = label[i * 10 + 9]
 
+    # transfer value in pixels from int to float
     train_data = train_data.astype('float32')
     vaild_data = vaild_data.astype('float32')
     test_data = test_data.astype('float32')
@@ -63,6 +69,7 @@ def load_data(dataset_path):
         (test_data, test_label)
     ]
 
+
 def convolutional_layer(data, kernel_size, bias_size, pooling_size):
     kernel = tf.get_variable("conv", kernel_size, initializer=tf.random_normal_initializer())
     bias = tf.get_variable('bias', bias_size, initializer=tf.random_normal_initializer())
@@ -72,22 +79,24 @@ def convolutional_layer(data, kernel_size, bias_size, pooling_size):
     pooling = tf.nn.max_pool(linear_output, ksize=pooling_size, strides=pooling_size, padding="SAME")
     return pooling
 
+
 def linear_layer(data, weights_size, biases_size):
     weights = tf.get_variable("weigths", weights_size, initializer=tf.random_normal_initializer())
     biases = tf.get_variable("biases", biases_size, initializer=tf.random_normal_initializer())
     return tf.add(tf.matmul(data, weights), biases)
 
+
 def convolutional_neural_network(data):
     # 根据类别个数定义最后输出层的神经元
     n_ouput_layer = 40
 
-    kernel_shape1=[5, 5, 1, 32]
-    kernel_shape2=[5, 5, 32, 64]
+    kernel_shape1 = [5, 5, 1, 32]
+    kernel_shape2 = [5, 5, 32, 64]
     full_conn_w_shape = [15 * 12 * 64, 1024]
     out_w_shape = [1024, n_ouput_layer]
 
-    bias_shape1=[32]
-    bias_shape2=[64]
+    bias_shape1 = [32]
+    bias_shape2 = [64]
     full_conn_b_shape = [1024]
     out_b_shape = [n_ouput_layer]
 
@@ -129,7 +138,8 @@ def convolutional_neural_network(data):
 
     return output;
 
-def train_facedata(dataset, model_dir,model_path):
+
+def train_facedata(dataset, model_dir, model_path):
     # train_set_x = data[0][0]
     # train_set_y = data[0][1]
     # valid_set_x = data[1][0]
@@ -146,8 +156,10 @@ def train_facedata(dataset, model_dir,model_path):
     # test_set_x, test_set_y = dataset[2]
     train_set_x = dataset[0][0]
     train_set_y = dataset[0][1]
+
     valid_set_x = dataset[1][0]
     valid_set_y = dataset[1][1]
+
     test_set_x = dataset[2][0]
     test_set_y = dataset[2][1]
 
@@ -160,34 +172,43 @@ def train_facedata(dataset, model_dir,model_path):
 
     # 用于保存训练的最佳模型
     saver = tf.train.Saver()
-    #model_dir = './model'
-    #model_path = model_dir + '/best.ckpt'
+    # model_dir = './model'
+    # model_path = model_dir + '/best.ckpt'
     with tf.Session() as session:
+        # define training times
+        trainingTimes = 50
         # 若不存在模型数据，需要训练模型参数
         if not os.path.exists(model_path + ".index"):
+            print("No model can be used, start training for %s times ......" % str(trainingTimes))
             session.run(tf.global_variables_initializer())
-            best_loss = float('Inf')
-            for epoch in range(20):
-                epoch_loss = 0
-                for i in range((int)(np.shape(train_set_x)[0] / batch_size)):
-                    x = train_set_x[i * batch_size: (i + 1) * batch_size]
-                    y = train_set_y[i * batch_size: (i + 1) * batch_size]
-                    _, cost = session.run([optimizer, cost_func], feed_dict={X: x, Y: y})
-                    epoch_loss += cost
+        else:
+            trainingTimes = 10
+            print("Model exists, start training for only %s times ......" % str(trainingTimes))
+            saver.restore(session, model_path)
 
-                print(epoch, ' : ', epoch_loss)
-                if best_loss > epoch_loss:
-                    best_loss = epoch_loss
-                    if not os.path.exists(model_dir):
-                        os.mkdir(model_dir)
-                        print("create the directory: %s" % model_dir)
-                    save_path = saver.save(session, model_path)
-                    print("Model saved in file: %s" % save_path)
+        # start training
+        best_loss = float('Inf')
+        for epoch in range(trainingTimes):
+            epoch_loss = 0
+            for i in range((int)(np.shape(train_set_x)[0] / batch_size)):
+                x = train_set_x[i * batch_size: (i + 1) * batch_size]
+                y = train_set_y[i * batch_size: (i + 1) * batch_size]
+                _, cost = session.run([optimizer, cost_func], feed_dict={X: x, Y: y})
+                epoch_loss += cost
+
+            print(epoch, ' : ', epoch_loss)
+            if epoch_loss <= best_loss or abs(best_loss - epoch_loss) <= 1e-1:
+                best_loss = epoch_loss
+                if not os.path.exists(model_dir):
+                    os.mkdir(model_dir)
+                    print("create the directory: %s" % model_dir)
+                save_path = saver.save(session, model_path)
+                print("Model saved in file: %s" % save_path)
 
         # 恢复数据并校验和测试
         saver.restore(session, model_path)
-        correct = tf.equal(tf.argmax(predict,1), tf.argmax(Y,1))
-        valid_accuracy = tf.reduce_mean(tf.cast(correct,'float'))
+        correct = tf.equal(tf.argmax(predict, 1), tf.argmax(Y, 1))
+        valid_accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
         print('valid set accuracy: ', valid_accuracy.eval({X: valid_set_x, Y: valid_set_y}))
 
         test_pred = tf.argmax(predict, 1).eval({X: test_set_x})
@@ -196,11 +217,11 @@ def train_facedata(dataset, model_dir,model_path):
         incorrect_index = [i for i in range(np.shape(test_correct)[0]) if not test_correct[i]]
         for i in incorrect_index:
             print('picture person is %i, but mis-predicted as person %i'
-                %(test_true[i], test_pred[i]))
+                  % (test_true[i], test_pred[i]))
         plot_errordata(incorrect_index, "../data/olivettifaces.gif")
 
 
-#画出在测试集中错误的数据
+# 画出在测试集中错误的数据
 def plot_errordata(error_index, dataset_path):
     img = mpimg.imread(dataset_path)
     plt.imshow(img)
@@ -210,8 +231,9 @@ def plot_errordata(error_index, dataset_path):
         column = index % 2
         currentAxis.add_patch(
             patches.Rectangle(
-                xy=(49 * 9 if column == 0 else 47 * 19,
-                     row * 57
+                xy=(47 * 9 if column == 0
+                    else 47 * 19,
+                    row * 57
                     ),
                 width=47,
                 height=57,
@@ -219,7 +241,7 @@ def plot_errordata(error_index, dataset_path):
                 edgecolor='r',
                 facecolor='none'
             )
-    )
+        )
     plt.savefig("result.png")
     plt.show()
 
@@ -227,10 +249,10 @@ def plot_errordata(error_index, dataset_path):
 def main():
     dataset_path = "../data/olivettifaces.gif"
     data = load_data(dataset_path)
-    print(len(data[0]))
     model_dir = './model'
     model_path = model_dir + '/best.ckpt'
     train_facedata(data, model_dir, model_path)
 
-if __name__ == "__main__" :
+
+if __name__ == "__main__":
     main()

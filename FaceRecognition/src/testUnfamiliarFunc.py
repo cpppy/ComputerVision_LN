@@ -43,9 +43,20 @@ def use_array_and_ndarray():
     arr9 = arr8.reshape((3,3))
     print(arr9)
 
+def use_tf_argmax():
+    data = [[1,3,4,2], [2,1,0,9]]
+    arr = np.array(data)
+    # argmax(arr, 0)  search based on column
+    print(np.argmax(arr,0))
+
+    # argmax(arr, 1)  search based on row
+    print(np.argmax(arr, 1))
+
+
 
 
 if __name__ == "__main__":
     # print(use_np_array())
     # print(use_np_empty())
-    use_array_and_ndarray()
+    # use_array_and_ndarray()
+    use_tf_argmax()
