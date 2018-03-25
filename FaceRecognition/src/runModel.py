@@ -19,6 +19,7 @@ def load_data(dataset_path):
     #img_ndarray = np.asarray(img, dtype='float32') / 32
 
     # 记录脸数据矩阵，57 * 47为每张脸的像素矩阵
+    # 40*10张照片
     faces = np.empty((400, 57 * 47))
 
     for row in range(20):
@@ -26,6 +27,9 @@ def load_data(dataset_path):
             faces[20 * row + column] = np.ndarray.flatten(
                 img_ndarray[row * 57: (row + 1) * 57, column * 47 : (column + 1) * 47]
             )
+
+    # then,we get a mat with shape of (400, 57*47), 2d mat
+
 
     label = np.zeros((400, 40))
     for i in range(40):
