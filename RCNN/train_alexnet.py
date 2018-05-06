@@ -108,7 +108,7 @@ def predict(network, modelfile, images):
 if __name__ == '__main__':
     # load data for pre_training_model
     # TRAIN_LIST = './train_list.txt'  ( all pictures exclude 7 & 16 dir)
-    # because 7 & 16 is used for testing model
+    # because dir 7 & 16 is used for testing model
     # TRAIN_CLASS = 17
     X, Y = load_data(config.TRAIN_LIST, config.TRAIN_CLASS)
     net = create_alexnet(config.TRAIN_CLASS)
