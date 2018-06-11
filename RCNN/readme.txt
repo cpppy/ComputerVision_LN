@@ -1,3 +1,7 @@
+learning usage
+copyright belongs to yanhuan0825(github)
+
+
 # 工程内容
 这个程序是基于tensorflow的tflearn库实现部分RCNN功能。
 
