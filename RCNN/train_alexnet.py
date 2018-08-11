@@ -90,7 +90,7 @@ def train(network, X, Y, save_model_path):
         print('load model...')
 
     # begin taining this model, training: 5 times recycle
-    for _ in range(5):
+    for _ in range(200):
         model.fit(X, Y, n_epoch=1, validation_set=0.1, shuffle=True,
                   show_metric=True, batch_size=64, snapshot_step=200,
                   snapshot_epoch=False, run_id='alexnet_oxflowers17')  # epoch = 1000
@@ -108,7 +108,7 @@ def predict(network, modelfile, images):
 if __name__ == '__main__':
     # load data for pre_training_model
     # TRAIN_LIST = './train_list.txt'  ( all pictures exclude 7 & 16 dir)
-    # because dir 7 & 16 is used for testing model
+    # because 7 & 16 is used for testing model
     # TRAIN_CLASS = 17
     X, Y = load_data(config.TRAIN_LIST, config.TRAIN_CLASS)
     net = create_alexnet(config.TRAIN_CLASS)

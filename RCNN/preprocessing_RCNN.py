@@ -47,22 +47,47 @@ def IOU(ver1, vertice2):
         area_2 = vertice2[4] * vertice2[5]
         iou = float(area_inter) / (area_1 + area_2 - area_inter)
         return iou
+
+    # no intersection exist between this two squares
     return False
 
 
+# IOU Part 2
+def calcIOUForSameRectStructureInput(rect1, rect2):
+    # vertices in four points
+    vertice1 = [rect1[0], rect1[1], rect1[0]+rect1[2], rect1[1]+rect1[3]]
+    vertice2 = [rect2[0], rect2[1], rect2[0]+rect2[2], rect2[1]+rect2[3]]
+    area_inter = if_intersection(vertice1[0], vertice1[2], vertice1[1], vertice1[3],
+                                 vertice2[0], vertice2[2], vertice2[1], vertice2[3])
+    if area_inter:
+        area_1 = rect1[2] * rect1[3]
+        area_2 = rect2[2] * rect2[3]
+        iou = float(area_inter) / (area_1 + area_2 - area_inter)
+        return iou
+
+    # no intersection exist between this two squares
+    return False
+
+
+
 # Clip Image
-def clip_pic(img, rect):
+def cropImage(img, rect):
     x = rect[0]
     y = rect[1]
     w = rect[2]
     h = rect[3]
     x_1 = x + w
     y_1 = y + h
-    # return img[x:x_1, y:y_1, :], [x, y, x_1, y_1, w, h]   
+    # return img[x:x_1, y:y_1, :], [x, y, x_1, y_1, w, h]
     return img[y:y_1, x:x_1, :], [x, y, x_1, y_1, w, h]
 
 # Read in data and save data for Alexnet
-def load_train_proposals(datafile, num_clss, save_path, threshold=0.5, is_svm=False, save=False):
+def load_train_proposals(datafile,
+                         num_clss,
+                         save_path,
+                         threshold=0.5,
+                         is_svm=False,
+                         save=False):
     fr = open(datafile, 'r')
     train_list = fr.readlines()
     # random.shuffle(train_list)
@@ -70,10 +95,13 @@ def load_train_proposals(datafile, num_clss, save_path, threshold=0.5, is_svm=Fa
         labels = []
         images = []
         tmp = line.strip().split(' ')
-        # tmp0 = image address
+        # tmp0 = image file path
         # tmp1 = label
         # tmp2 = rectangle vertices
         img = cv2.imread(tmp[0])
+        # scale : size of the smallest region proposals
+        # sigma ?
+        # min_size ?
         img_lbl, regions = selectivesearch.selective_search(img,
                                                             scale=500,
                                                             sigma=0.9,
@@ -109,6 +137,9 @@ def load_train_proposals(datafile, num_clss, save_path, threshold=0.5, is_svm=Fa
             ref_rect = tmp[2].split(',')
             ref_rect_int = [int(i) for i in ref_rect]  #transfer float to int
             iou_val = IOU(ref_rect_int, proposal_vertice)
+            print(ref_rect_int)
+            print(proposal_vertice)
+            print("IOU :", iou_val)
             # labels, let 0 represent default class, which is background
             index = int(tmp[1])
             if is_svm:
@@ -130,16 +161,17 @@ def load_train_proposals(datafile, num_clss, save_path, threshold=0.5, is_svm=Fa
     fr.close()
 
 
+
 # load data
-def load_from_npy(data_set):
+def load_from_npy(npyFilePath):
     images, labels = [], []
-    data_list = os.listdir(data_set)
+    data_list = os.listdir(npyFilePath)
     print(data_list)
     # random.shuffle(data_list)
     for index, fileName in enumerate(data_list):
         if (fileName[len(fileName)-3 :] != "npy") :
             continue
-        i, l = np.load(os.path.join(data_set, fileName))
+        i, l = np.load(os.path.join(npyFilePath, fileName))
         images.extend(i)
         labels.extend(l)
         tools.view_bar("load data of %s" % fileName, index + 1, len(data_list))
@@ -149,12 +181,12 @@ def load_from_npy(data_set):
 
 if __name__ == "__main__":
     print("Function = preprocessing_RCNN.load_train_proposals, Reading Data.")
-    # load_train_proposals(datafile = config.FINE_TUNE_LIST,
-    #                      num_clss = 2,
-    #                      save_path = "/360WiFi/",
-    #                      threshold=0.5,
-    #                      is_svm=False,
-    #                      save=True)
+    load_train_proposals(datafile = config.FINE_TUNE_LIST,
+                         num_clss = 2,
+                         save_path = "/360WiFi/",
+                         threshold=0.5,
+                         is_svm=False,
+                         save=True)
 
     images, labels = load_from_npy("/360WiFi")
     # each npy file contains(all region proposals for one pictures, include it's classification)

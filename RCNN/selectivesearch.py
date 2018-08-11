@@ -21,6 +21,8 @@ def _generate_segments(im_orig, scale, sigma, min_size):
         Huttenlocher
     """
 
+    # scale is the width of image generated
+
     # open the Image
     im_mask = skimage.segmentation.felzenszwalb(
         skimage.util.img_as_float(im_orig), scale=scale, sigma=sigma,
